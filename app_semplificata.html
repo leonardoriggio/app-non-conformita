@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Segnalazione Non Conformità</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      background-color: #f9f9f9;
+    }
+    .hidden { display: none; }
+    .user-grid {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    .user-box {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 150px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .user-box:hover {
+      transform: scale(1.05);
+      background-color: #e8f0fe;
+    }
+    .user-box img {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+    }
+    #utente-attivo {
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="selezione-utente">
+    <h1>Chi sta compilando?</h1>
+    <div class="user-grid">
+      <div class="user-box" onclick="selezionaUtente('Leonardo')">
+        <img src="https://via.placeholder.com/80?text=L" alt="Leonardo">
+        <div class="user-name">Leonardo</div>
+      </div>
+      <div class="user-box" onclick="selezionaUtente('Manuel')">
+        <img src="https://via.placeholder.com/80?text=M" alt="Manuel">
+        <div class="user-name">Manuel</div>
+      </div>
+      <div class="user-box" onclick="selezionaUtente('Rabija')">
+        <img src="https://via.placeholder.com/80?text=R" alt="Rabija">
+        <div class="user-name">Rabija</div>
+      </div>
+      <div class="user-box" onclick="selezionaUtente('Matteo')">
+        <img src="https://via.placeholder.com/80?text=Ma" alt="Matteo">
+        <div class="user-name">Matteo</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modulo" class="hidden">
+    <h2>Segnalazione Non Conformità</h2>
+    <div id="utente-attivo"></div>
+
+    <label for="scartatore">Chi ha scartato:</label>
+    <input type="text" id="scartatore" />
+
+    <label for="codice">Codice articolo:</label>
+    <input type="text" id="codice" onblur="cercaArticolo()" />
+
+    <label for="descrizione">Descrizione:</label>
+    <input type="text" id="descrizione" disabled />
+
+    <label for="fornitore">Fornitore:</label>
+    <input type="text" id="fornitore" list="listaFornitori" />
+    <datalist id="listaFornitori"></datalist>
+
+    <label for="motivo">Motivo dello scarto:</label>
+    <textarea id="motivo" rows="4"></textarea>
+
+    <button onclick="apriEmail()">Apri email</button>
+    <button onclick="resetForm()">Reset</button>
+  </div>
+
+  <script>
+    let articoli = [];
+
+    fetch('articoli.json')
+      .then(response => response.json())
+      .then(data => articoli = data);
+
+    function selezionaUtente(nome) {
+      document.getElementById("utente-attivo").textContent = "Utente attivo: " + nome;
+      document.getElementById("selezione-utente").classList.add("hidden");
+      document.getElementById("modulo").classList.remove("hidden");
+      document.utente = nome;
+    }
+
+    function cercaArticolo() {
+      const codice = document.getElementById("codice").value.trim();
+      const articolo = articoli.find(a => a.codice === codice);
+      if (articolo) {
+        document.getElementById("descrizione").value = articolo.descrizione;
+        document.getElementById("fornitore").value = articolo.nome_fornitore;
+        aggiornaListaFornitori(articolo.nome_fornitore);
+      } else {
+        document.getElementById("descrizione").value = "";
+        document.getElementById("fornitore").value = "";
+        aggiornaListaFornitori();
+        alert("Codice articolo non trovato.");
+      }
+    }
+
+    function aggiornaListaFornitori(fornitore = '') {
+      const datalist = document.getElementById('listaFornitori');
+      datalist.innerHTML = '';
+      if (fornitore) {
+        const option = document.createElement('option');
+        option.value = fornitore;
+        datalist.appendChild(option);
+      }
+    }
+
+    function apriEmail() {
+      const to = "riggioleonardobusiness@gmail.com";
+      const subject = "Segnalazione Non Conformità";
+      const body = 
+        "Chi compila: " + document.utente + "\n" +
+        "Chi ha scartato: " + document.getElementById("scartatore").value + "\n" +
+        "Codice articolo: " + document.getElementById("codice").value + "\n" +
+        "Descrizione: " + document.getElementById("descrizione").value + "\n" +
+        "Fornitore: " + document.getElementById("fornitore").value + "\n" +
+        "Motivo dello scarto: " + document.getElementById("motivo").value;
+
+      window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    function resetForm() {
+      document.getElementById("scartatore").value = "";
+      document.getElementById("codice").value = "";
+      document.getElementById("descrizione").value = "";
+      document.getElementById("fornitore").value = "";
+      document.getElementById("motivo").value = "";
+    }
+  </script>
+</body>
+</html>
